@@ -28,7 +28,7 @@ if(!file.exists("GEOmetadb.sqlite"))
 
 ```{r}
 geo_con <- dbConnect(SQLite(), 'GEOmetadb.sqlite')
-query<-"SELECT 
+res <- dbGetQuery(geo_con, "SELECT 
             gse.title, 
             gse.gse, 
             gpl.gpl, 
@@ -38,13 +38,23 @@ query<-"SELECT
         JOIN gpl ON j.gpl=gpl.gpl 
         WHERE gse.title like '%HCV%'
             AND gpl.manufacturer like '%Illumina%' 
-            AND gse.contact like '%Yale%';"
-res <- dbGetQuery(geo_con, query)
+            AND gse.contact like '%Yale%';")
 ```
 
 ## Problem 2
+
 ```{r}
-res.2 <- data.table(dbGetQuery(geo_con, query))
+res.2 <- data.table(dbGetQuery(geo_con, "SELECT 
+            gse.title, 
+            gse.gse, 
+            gpl.gpl, 
+            gpl.manufacturer, 
+            gpl.title 
+        FROM (gse JOIN gse_gpl ON gse.gse=gse_gpl.gse) j 
+        JOIN gpl ON j.gpl=gpl.gpl 
+        WHERE gse.title like '%HCV%'
+            AND gpl.manufacturer like '%Illumina%' 
+            AND gse.contact like '%Yale%';"))
 ```
 
 ## Cleanup
