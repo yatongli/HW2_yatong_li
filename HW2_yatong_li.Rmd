@@ -43,7 +43,9 @@ res <- dbGetQuery(geo_con, query)
 ```
 
 ## Problem 2
+```{r}
 res.2 <- data.table(dbGetQuery(geo_con, query))
+```
 
 ## Cleanup
 
