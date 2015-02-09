@@ -39,6 +39,7 @@ res <- dbGetQuery(geo_con, "SELECT
         WHERE gse.title like '%HCV%'
             AND gpl.manufacturer like '%Illumina%' 
             AND gse.contact like '%Yale%';")
+res
 ```
 
 ## Problem 2
@@ -55,6 +56,7 @@ res.2 <- data.table(dbGetQuery(geo_con, "SELECT
         WHERE gse.title like '%HCV%'
             AND gpl.manufacturer like '%Illumina%' 
             AND gse.contact like '%Yale%';"))
+res.2
 ```
 
 ## Cleanup
