@@ -27,7 +27,11 @@ if(!file.exists("GEOmetadb.sqlite"))
 ## Problem 1
 
 ```{r}
+# open connection
 geo_con <- dbConnect(SQLite(), 'GEOmetadb.sqlite')
+
+# SQL query to show title, GSE accession number, GPL accession number, manufacturer, and description
+# select all expression data for HCV, Illumina platform, submitted from someone at Yale
 res <- dbGetQuery(geo_con, "SELECT 
             gse.title, 
             gse.gse, 
@@ -42,9 +46,34 @@ res <- dbGetQuery(geo_con, "SELECT
 res
 ```
 
+Also, we know that HCV stands for hepatitis C virus so we might also search for titles that include either 'HCV' or 'hepatitis C virus'. Also, if we want even more details about the platform used, we can use the following query. When we do this we see that there is actually one more dataset whose title includes the phrase "Hepatitis C virus" rather than "HCV", so we were unable to pick it up using our first query. The additional platform description is quite detailed.
+
+```{r}
+# SQL query to show title, GSE accession number, GPL accession number, manufacturer, and description
+# select all data for HCV or hepatitis C virus, Illumina platform, submitted from someone at Yale
+res_v2 <- dbGetQuery(geo_con, "SELECT 
+            gse.title, 
+            gse.gse, 
+            gpl.gpl, 
+            gpl.manufacturer, 
+            gpl.title,
+            gpl.description
+        FROM (gse JOIN gse_gpl ON gse.gse=gse_gpl.gse) j 
+        JOIN gpl ON j.gpl=gpl.gpl 
+        WHERE (gse.title like '%epatit%' OR gse.title like '%HCV%')
+            AND gpl.manufacturer like '%Illumina%'
+            AND gse.contact like '%Yale%';")
+res_v2
+
+# also we can use pandoc table to present this table in a different way
+pandoc.table(res[,1:5],style='grid')
+```
+
+
 ## Problem 2
 
 ```{r}
+# reproduce the query using data.table
 res.2 <- data.table(dbGetQuery(geo_con, "SELECT 
             gse.title, 
             gse.gse, 
@@ -59,8 +88,31 @@ res.2 <- data.table(dbGetQuery(geo_con, "SELECT
 res.2
 ```
 
-## Cleanup
+We can also use `data.table` to do the joins rather than our SQL query. It might look something like this:
 
 ```{r}
+# reproduce query using data.table joins instead of SQL joins
+res2 <- data.table(dbGetQuery(geo_con, "SELECT gpl, manufacturer, title 
+                              from gpl 
+                              WHERE manufacturer like '%Illumina%';"), 
+                          key="gpl")[setkey(data.table(dbGetQuery(geo_con, 
+                              "SELECT * from gse_gpl;"), 
+                          key=c("gse", "gpl"))[data.table(dbGetQuery(geo_con, 
+                              "SELECT title, gse 
+                              from gse 
+                              WHERE contact like '%Yale%' 
+                              AND title like '%HCV%';"), 
+                          key="gse"),nomatch=0],gpl),nomatch=0]
+
+res2
+
+# and it looks the same as our original result:
+res
+res2
+```
+
+## Cleanup
+```{r}
+# close connnection
 dbDisconnect(geo_con)
 ```
